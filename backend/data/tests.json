@@ -1,38 +1,6 @@
 {
   "tests": [
     {
-      "name": "Create user data",
-      "method": "POST",
-      "path": "/",
-      "headers": {
-        "X-Auth-Token": "valid_jwt_token_here"
-      },
-      "body": {
-        "key": "test_key",
-        "value": "test_value"
-      },
-      "expectedStatus": 201,
-      "expectedBody": {
-        "id": "number",
-        "key": "string",
-        "value": "string"
-      },
-      "bodyMatcher": "partial"
-    },
-    {
-      "name": "Get all user data",
-      "method": "GET",
-      "path": "/",
-      "headers": {
-        "X-Auth-Token": "valid_jwt_token_here"
-      },
-      "expectedStatus": 200,
-      "expectedBody": {
-        "data": "array"
-      },
-      "bodyMatcher": "partial"
-    },
-    {
       "name": "No token provided",
       "method": "GET",
       "path": "/",

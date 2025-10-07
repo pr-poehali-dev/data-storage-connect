@@ -178,6 +178,38 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 })
             }
         
+        elif method == 'DELETE':
+            params = event.get('queryStringParameters', {})
+            data_id = params.get('id')
+            
+            if not data_id:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'Missing id'})
+                }
+            
+            cursor.execute(
+                "DELETE FROM user_data WHERE id = %s AND user_id = %s RETURNING id",
+                (data_id, user_id)
+            )
+            deleted = cursor.fetchone()
+            conn.commit()
+            
+            if not deleted:
+                return {
+                    'statusCode': 404,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'Data not found'})
+                }
+            
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'isBase64Encoded': False,
+                'body': json.dumps({'success': True, 'message': 'Data deleted'})
+            }
+        
         return {
             'statusCode': 405,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
