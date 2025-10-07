@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,9 +7,95 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import { authAPI, type User } from '@/lib/auth';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home');
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [registerName, setRegisterName] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+
+  const handleLogin = async () => {
+    if (!loginEmail || !loginPassword) {
+      toast({
+        title: 'Ошибка',
+        description: 'Заполните все поля',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await authAPI.login(loginEmail, loginPassword);
+      setUser(result.user);
+      toast({
+        title: 'Успешно!',
+        description: `Добро пожаловать, ${result.user.name}!`,
+      });
+      setLoginEmail('');
+      setLoginPassword('');
+      navigate('/dashboard');
+    } catch (error) {
+      toast({
+        title: 'Ошибка входа',
+        description: error instanceof Error ? error.message : 'Неверные данные',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!registerName || !registerEmail || !registerPassword) {
+      toast({
+        title: 'Ошибка',
+        description: 'Заполните все поля',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await authAPI.register(registerName, registerEmail, registerPassword);
+      setUser(result.user);
+      toast({
+        title: 'Регистрация успешна!',
+        description: `Добро пожаловать, ${result.user.name}!`,
+      });
+      setRegisterName('');
+      setRegisterEmail('');
+      setRegisterPassword('');
+      navigate('/dashboard');
+    } catch (error) {
+      toast({
+        title: 'Ошибка регистрации',
+        description: error instanceof Error ? error.message : 'Не удалось зарегистрироваться',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    authAPI.logout();
+    setUser(null);
+    toast({
+      title: 'Выход выполнен',
+      description: 'До скорой встречи!',
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -38,7 +125,14 @@ const Index = () => {
             </button>
           </div>
 
-          <Button className="hidden md:flex">Войти</Button>
+          {user ? (
+            <div className="hidden md:flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">Привет, {user.name}</span>
+              <Button onClick={handleLogout} variant="outline">Выйти</Button>
+            </div>
+          ) : (
+            <Button className="hidden md:flex">Войти</Button>
+          )}
           <Button variant="ghost" size="icon" className="md:hidden">
             <Icon name="Menu" size={20} />
           </Button>
@@ -135,34 +229,68 @@ const Index = () => {
                     <TabsContent value="login" className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="login-email">Email</Label>
-                        <Input id="login-email" type="email" placeholder="your@email.com" />
+                        <Input 
+                          id="login-email" 
+                          type="email" 
+                          placeholder="your@email.com"
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          disabled={loading}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="login-password">Пароль</Label>
-                        <Input id="login-password" type="password" placeholder="••••••••" />
+                        <Input 
+                          id="login-password" 
+                          type="password" 
+                          placeholder="••••••••"
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          disabled={loading}
+                        />
                       </div>
-                      <Button className="w-full" size="lg">
+                      <Button className="w-full" size="lg" onClick={handleLogin} disabled={loading}>
                         <Icon name="LogIn" size={18} className="mr-2" />
-                        Войти
+                        {loading ? 'Вход...' : 'Войти'}
                       </Button>
                     </TabsContent>
                     
                     <TabsContent value="register" className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="register-name">Имя</Label>
-                        <Input id="register-name" placeholder="Ваше имя" />
+                        <Input 
+                          id="register-name" 
+                          placeholder="Ваше имя"
+                          value={registerName}
+                          onChange={(e) => setRegisterName(e.target.value)}
+                          disabled={loading}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="register-email">Email</Label>
-                        <Input id="register-email" type="email" placeholder="your@email.com" />
+                        <Input 
+                          id="register-email" 
+                          type="email" 
+                          placeholder="your@email.com"
+                          value={registerEmail}
+                          onChange={(e) => setRegisterEmail(e.target.value)}
+                          disabled={loading}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="register-password">Пароль</Label>
-                        <Input id="register-password" type="password" placeholder="••••••••" />
+                        <Input 
+                          id="register-password" 
+                          type="password" 
+                          placeholder="••••••••"
+                          value={registerPassword}
+                          onChange={(e) => setRegisterPassword(e.target.value)}
+                          disabled={loading}
+                        />
                       </div>
-                      <Button className="w-full" size="lg">
+                      <Button className="w-full" size="lg" onClick={handleRegister} disabled={loading}>
                         <Icon name="UserPlus" size={18} className="mr-2" />
-                        Зарегистрироваться
+                        {loading ? 'Регистрация...' : 'Зарегистрироваться'}
                       </Button>
                     </TabsContent>
                   </Tabs>
