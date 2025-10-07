@@ -1,0 +1,33 @@
+{
+  "tests": [
+    {
+      "name": "Login or check existing user",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "login",
+        "email": "test@example.com",
+        "password": "testpass123"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "token": "string",
+        "user": {
+          "email": "string"
+        }
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Missing fields on register",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "register",
+        "email": "incomplete@example.com"
+      },
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    }
+  ]
+}
